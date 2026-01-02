@@ -41,6 +41,22 @@ func DecodeMessage(data []byte) (string, []byte, error) {
 	return baseMessage.Method, body[:bodyLength], nil
 }
 
-func DecodeMessage(data []byte) (any, error) {
-	return nil, nil
+func Split(data []byte, _ bool) (advance int, token []byte, err error) {
+	header, body, found := bytes.Cut(data, []byte{'\r', '\n', '\r', '\n'})
+	if !found {
+		return 0, nil, errors.New("incomplete request body")
+	}
+
+	bodyLengthBytes := header[len("Content-Length: "):]
+	bodyLength, err := strconv.Atoi(string(bodyLengthBytes))
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if len(body) < bodyLength {
+		return 0, nil, nil
+	}
+
+	totalLength := len(header) + 4 + bodyLength
+	return totalLength, data[:totalLength], nil
 }
