@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"log"
 	"os"
 
+	"github.com/fagbenjaenoch/css-language-server/lsp"
 	"github.com/fagbenjaenoch/css-language-server/rpc"
 )
 
@@ -16,15 +18,33 @@ func main() {
 	scanner.Split(rpc.Split)
 
 	for scanner.Scan() {
-		rpcRequest := scanner.Text()
+		rpcRequest := scanner.Bytes()
 		log.Printf("received a message from the client of %d bytes", len(rpcRequest))
 
-		method, body, err := rpc.DecodeMessage([]byte(rpcRequest))
+		method, body, err := rpc.DecodeMessage(rpcRequest)
 		if err != nil {
-			log.Println("could not parse request body")
-			return
+			log.Printf("could not parse request body: %s", err)
+			continue
 		}
-		log.Printf("received a request of %s method with the following body: %s", method, body)
+		log.Printf("received a request of %s method", method)
+
+		switch method {
+		case rpc.MethodInitialize:
+			{
+				log.Println("initializing server")
+				var request lsp.InitializeParams
+				if err := json.Unmarshal(body, &request); err != nil {
+					log.Printf("could not unmarshal request body: %s", err)
+					continue
+				}
+
+				log.Printf("connected to %s %s", request.Params.ClientInfo.Name, request.Params.ClientInfo.Version)
+
+				initializeResponse := lsp.NewInitializeResponse(request.ID)
+				response := rpc.EncodeMessage(initializeResponse)
+				os.Stdout.Write([]byte(response))
+			}
+		}
 	}
 }
 

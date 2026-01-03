@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+const (
+	MethodInitialize = "initialize"
+)
+
 func EncodeMessage(msg any) string {
 	jsonPayload, err := json.Marshal(msg)
 	if err != nil {
