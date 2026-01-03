@@ -18,6 +18,13 @@ func main() {
 	for scanner.Scan() {
 		rpcRequest := scanner.Text()
 		log.Printf("received a message from the client of %d bytes", len(rpcRequest))
+
+		method, body, err := rpc.DecodeMessage([]byte(rpcRequest))
+		if err != nil {
+			log.Println("could not parse request body")
+			return
+		}
+		log.Printf("received a request of %s method with the following body: %s", method, body)
 	}
 }
 
