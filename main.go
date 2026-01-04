@@ -48,10 +48,14 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 			log.Printf("connected to %s %s", request.Params.ClientInfo.Name, request.Params.ClientInfo.Version)
 
 			initializeResponse := lsp.NewInitializeResponse(request.ID)
-			response := rpc.EncodeMessage(initializeResponse)
-			writer.Write([]byte(response))
+			writeResponse(writer, initializeResponse)
 		}
 	}
+}
+
+func writeResponse(writer io.Writer, msg any) {
+	response := rpc.EncodeMessage(msg)
+	writer.Write([]byte(response))
 }
 
 func getLogger(filename string) *log.Logger {
