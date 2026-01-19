@@ -34,21 +34,14 @@ func main() {
 }
 
 func handleRequest(logger *log.Logger, writer io.Writer, method string, body []byte) {
-	logger.Printf("recieved method %s from client", method)
+	logger.Printf("recieved method '%s' from client", method)
 
 	switch method {
-	case rpc.MethodInitialize:
-		{
-			log.Println("initializing server")
-			var request lsp.InitializeParams
-			if err := json.Unmarshal(body, &request); err != nil {
-				log.Printf("could not unmarshal request body: %s", err)
-			}
-
-			log.Printf("connected to %s %s", request.Params.ClientInfo.Name, request.Params.ClientInfo.Version)
-
-			initializeResponse := lsp.NewInitializeResponse(request.ID)
-			writeResponse(writer, initializeResponse)
+	case "initialize":
+		logger.Println("initializing server")
+		var request lsp.InitializeRequest
+		if err := json.Unmarshal(body, &request); err != nil {
+			logger.Printf("could not unmarshal request body: %s", err)
 		}
 	}
 }
