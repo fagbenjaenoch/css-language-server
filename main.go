@@ -37,7 +37,7 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 	logger.Printf("recieved method '%s' from client", method)
 
 	switch method {
-	case "initialize":
+	case rpc.MethodInitialize:
 		logger.Println("initializing server")
 		var request lsp.InitializeRequest
 		if err := json.Unmarshal(body, &request); err != nil {
@@ -49,7 +49,7 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 		initializeResponse := lsp.NewInitializeResponse(request.ID)
 		writeResponse(writer, initializeResponse)
 
-	case "textDocument/didOpen":
+	case rpc.MethodTextDocumentDidOpen:
 		logger.Println("recieved a textDocument/didOpen notification")
 
 		var request lsp.DidOpenTextDocumentNotification
@@ -59,7 +59,7 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 
 		logger.Println(request.Params.TextDocument.Text)
 
-	case "textDocument/didChange":
+	case rpc.MethodTextDocumentDidChange:
 		log.Println("recieved a textDocument/didChange notification")
 
 		var request lsp.DidChangeTextDocumentNotification
