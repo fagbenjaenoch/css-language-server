@@ -43,6 +43,31 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 		if err := json.Unmarshal(body, &request); err != nil {
 			logger.Printf("could not unmarshal request body: %s", err)
 		}
+
+		logger.Printf("connected to %s %s", request.Params.ClientInfo.Name, request.Params.ClientInfo.Version)
+
+		initializeResponse := lsp.NewInitializeResponse(request.ID)
+		writeResponse(writer, initializeResponse)
+
+	case "textDocument/didOpen":
+		logger.Println("recieved a textDocument/didOpen notification")
+
+		var request lsp.DidOpenTextDocumentNotification
+		if err := json.Unmarshal(body, &request); err != nil {
+			logger.Printf("could not parse notification from textDocument/didOpen")
+		}
+
+		logger.Println(request.Params.TextDocument.Text)
+
+	case "textDocument/didChange":
+		log.Println("recieved a textDocument/didChange notification")
+
+		var request lsp.DidChangeTextDocumentNotification
+		if err := json.Unmarshal(body, &request); err != nil {
+			log.Printf("could not parse notification from textDocument/didChange")
+		}
+
+		logger.Println(request.Params.ContentChanges[0].Text)
 	}
 }
 
