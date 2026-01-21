@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	MethodInitialize            = "initialize"
-	MethodTextDocumentDidOpen   = "textDocument/didOpen"
-	MethodTextDocumentDidChange = "textDocument/didChange"
+	MethodInitialize             = "initialize"
+	MethodTextDocumentDidOpen    = "textDocument/didOpen"
+	MethodTextDocumentDidChange  = "textDocument/didChange"
+	MethodTextDocumentCompletion = "textDocument/completion"
 )
 
 func EncodeMessage(msg any) string {

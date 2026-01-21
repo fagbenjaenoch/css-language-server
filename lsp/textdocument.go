@@ -16,3 +16,30 @@ type Position struct {
 	Line      int `json:"line"`
 	Character int `json:"character"`
 }
+
+type TextDocumentPositionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"postion"`
+}
+
+type TextDocumentIdentifier struct {
+	Uri string `json:"uri"`
+}
+
+type VersionTextDocumentIdentifier struct {
+	TextDocumentIdentifier
+	Version int `json:"version"`
+}
+
+func LineRange(line, start, end int) Range {
+	return Range{
+		Start: Position{
+			Line:      line,
+			Character: start,
+		},
+		End: Position{
+			Line:      line,
+			Character: end,
+		},
+	}
+}
