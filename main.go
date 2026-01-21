@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/fagbenjaenoch/css-language-server/analysis"
 	"github.com/fagbenjaenoch/css-language-server/lsp"
 	"github.com/fagbenjaenoch/css-language-server/rpc"
 )
@@ -19,6 +20,8 @@ func main() {
 	scanner.Split(rpc.Split)
 	writer := os.Stdout
 
+	state := analysis.NewState()
+
 	for scanner.Scan() {
 		rpcRequest := scanner.Bytes()
 		logger.Printf("received a message from the client of %d bytes", len(rpcRequest))
@@ -29,11 +32,11 @@ func main() {
 			continue
 		}
 
-		handleRequest(logger, writer, method, body)
+		handleRequest(logger, writer, state, method, body)
 	}
 }
 
-func handleRequest(logger *log.Logger, writer io.Writer, method string, body []byte) {
+func handleRequest(logger *log.Logger, writer io.Writer, state *analysis.State, method string, body []byte) {
 	logger.Printf("recieved method '%s' from client", method)
 
 	switch method {
@@ -50,24 +53,46 @@ func handleRequest(logger *log.Logger, writer io.Writer, method string, body []b
 		writeResponse(writer, initializeResponse)
 
 	case rpc.MethodTextDocumentDidOpen:
-		logger.Println("recieved a textDocument/didOpen notification")
-
 		var request lsp.DidOpenTextDocumentNotification
 		if err := json.Unmarshal(body, &request); err != nil {
 			logger.Printf("could not parse notification from textDocument/didOpen")
 		}
 
-		logger.Println(request.Params.TextDocument.Text)
+		diagnostics := state.OpenDocument(request.Params.TextDocument.Uri, request.Params.TextDocument.Text)
+		if len(diagnostics) == 0 {
+			return
+		}
+		response := lsp.PublishDiagnosticsParams{
+			Uri:         request.Params.TextDocument.Uri,
+			Diagnostics: diagnostics,
+		}
+		writeResponse(writer, response)
 
 	case rpc.MethodTextDocumentDidChange:
-		log.Println("recieved a textDocument/didChange notification")
-
 		var request lsp.DidChangeTextDocumentNotification
 		if err := json.Unmarshal(body, &request); err != nil {
-			log.Printf("could not parse notification from textDocument/didChange")
+			logger.Printf("could not parse notification from textDocument/didChange")
+			return
 		}
 
-		logger.Println(request.Params.ContentChanges[0].Text)
+		diagnostics := state.UpdateDocument(request.Params.TextDocument.Uri, request.Params.ContentChanges[0].Text)
+		if len(diagnostics) == 0 {
+			return
+		}
+		response := lsp.PublishDiagnosticsParams{
+			Uri:         request.Params.TextDocument.Uri,
+			Diagnostics: diagnostics,
+		}
+		writeResponse(writer, response)
+	case rpc.MethodTextDocumentCompletion:
+		var request lsp.CompletionRequest
+		if err := json.Unmarshal(body, &request); err != nil {
+			logger.Printf("could not parse %s request body", rpc.MethodTextDocumentCompletion)
+			return
+		}
+
+		// response := state.TextDocumentCompletion(request.ID, request.Params.TextDocument.Uri)
+		// writeResponse(writer, response)
 	}
 }
 
